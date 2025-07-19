@@ -169,35 +169,6 @@
             font-weight: 600;
         }
         
-        .price-tabs {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            overflow-x: auto;
-        }
-        
-        .price-tab {
-            flex: 1;
-            min-width: 120px;
-            background: var(--light);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .price-tab.active {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .price-value {
-            font-size: 18px;
-            font-weight: 700;
-            margin-top: 5px;
-        }
-        
         /* Топ мемы */
         .top-memes {
             background: white;
@@ -286,39 +257,33 @@
             cursor: pointer;
         }
         
-        /* Стили для повторной отправки */
-        .resend-container {
-            text-align: center;
-            margin-top: 20px;
+        /* Стили для создания мема */
+        .create-meme-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
         
-        .resend-btn {
-            background: var(--light);
-            color: var(--primary);
-            border: 2px solid var(--primary);
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        
-        .resend-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .resend-message {
-            margin-top: 10px;
-            font-size: 14px;
-        }
-        
-        .resend-success {
+        .price-up {
             color: var(--success);
+            animation: pulseGreen 1s;
         }
         
-        .resend-error {
+        .price-down {
             color: var(--danger);
+            animation: pulseRed 1s;
+        }
+        
+        @keyframes pulseGreen {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes pulseRed {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -335,13 +300,6 @@
             <button id="login-button" class="auth-button">Войти</button>
             <div class="auth-switch">
                 Нет аккаунта? <a id="show-register-btn" class="auth-link">Создать</a>
-            </div>
-            
-            <!-- Контейнер для повторной отправки письма -->
-            <div id="resend-container" class="resend-container" style="display: none;">
-                <p>Не получили письмо подтверждения?</p>
-                <button id="resend-button" class="resend-btn">Отправить повторно</button>
-                <div id="resend-message" class="resend-message"></div>
             </div>
         </div>
     </div>
@@ -367,45 +325,37 @@
         <button class="settings-btn" id="settings-btn">⚙️</button>
     </header>
 
+    <!-- Блок поиска -->
     <div class="exchange-container">
         <div class="search-container">
-            <input type="text" class="search-input" placeholder="Введите название мема...">
-            <button class="search-button">Поиск</button>
-        </div>
-        
-        <div class="price-tabs">
-            <div class="price-tab active">
-                <div>Текущая</div>
-                <div class="price-value">$120</div>
-            </div>
-            <div class="price-tab">
-                <div>5 мин</div>
-                <div class="price-value" style="color: var(--success)">+2.5%</div>
-            </div>
-            <div class="price-tab">
-                <div>15 мин</div>
-                <div class="price-value" style="color: var(--danger)">-1.8%</div>
-            </div>
-            <div class="price-tab">
-                <div>1 час</div>
-                <div class="price-value" style="color: var(--success)">+5.3%</div>
-            </div>
-            <div class="price-tab">
-                <div>24 часа</div>
-                <div class="price-value" style="color: var(--success)">+12.7%</div>
-            </div>
+            <input type="text" id="search-input" class="search-input" placeholder="Введите название мема...">
+            <button id="search-button" class="search-button">Поиск</button>
         </div>
     </div>
 
+    <!-- Блок с мемами -->
     <div class="top-memes">
         <div class="section-header">
-            <h3 class="section-title">Топ-5 мемов</h3>
-            <div class="dropdown">
-                <button class="dropdown-btn">▼ Показать больше</button>
-            </div>
+            <h3 class="section-title">Топ мемов</h3>
         </div>
-        <div class="meme-grid" id="top-memes-grid">
+        <div class="meme-grid" id="meme-grid">
             <!-- Мемы будут загружаться здесь -->
+            <p id="loading-memes">Загрузка мемов...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно создания мема -->
+<div id="create-meme-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" id="close-create-meme">&times;</span>
+        <h2 class="auth-title">Добавить мем на биржу</h2>
+        <div id="create-meme-error" class="error-message"></div>
+        <div class="create-meme-form">
+            <input type="file" id="meme-image" accept="image/*" class="auth-input">
+            <input type="text" id="meme-name" class="auth-input" placeholder="Название мема">
+            <input type="number" id="meme-price" class="auth-input" placeholder="Цена ($)" min="1">
+            <button id="publish-meme-btn" class="auth-button">Опубликовать</button>
         </div>
     </div>
 </div>
@@ -421,9 +371,9 @@
         appId: "1:1093409771331:web:938dacd784665c53cca9f6"
     };
     
-    // Проверяем, не инициализировано ли уже Firebase
+    // Инициализация Firebase
     if (!firebase.apps.length) {
-        const app = firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
     }
     
     const auth = firebase.auth();
@@ -436,313 +386,299 @@
     const registerModal = document.getElementById('register-modal');
     const showRegisterBtn = document.getElementById('show-register-btn');
     const closeRegister = document.getElementById('close-register');
-    const resendContainer = document.getElementById('resend-container');
-    const resendButton = document.getElementById('resend-button');
-    const resendMessage = document.getElementById('resend-message');
+    const settingsBtn = document.getElementById('settings-btn');
+    const createMemeModal = document.getElementById('create-meme-modal');
+    const closeCreateMeme = document.getElementById('close-create-meme');
+    const publishMemeBtn = document.getElementById('publish-meme-btn');
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    const memeGrid = document.getElementById('meme-grid');
+    const loadingMemes = document.getElementById('loading-memes');
     
-    // Переменная для хранения email пользователя, ожидающего подтверждения
-    let pendingEmail = null;
+    // Переменные состояния
+    let currentUser = null;
+    let allMemes = [];
     
-    // Проверяем существование элементов перед добавлением обработчиков
-    if (showRegisterBtn) {
-        showRegisterBtn.addEventListener('click', () => {
-            if (registerModal) {
+    // Инициализация приложения
+    init();
+    
+    function init() {
+        setupEventListeners();
+        auth.onAuthStateChanged(handleAuthStateChange);
+    }
+    
+    function setupEventListeners() {
+        // Аутентификация
+        if (document.getElementById('login-button')) {
+            document.getElementById('login-button').addEventListener('click', login);
+        }
+        
+        if (document.getElementById('register-button')) {
+            document.getElementById('register-button').addEventListener('click', register);
+        }
+        
+        if (showRegisterBtn) {
+            showRegisterBtn.addEventListener('click', () => {
                 registerModal.style.display = 'flex';
-            }
-        });
-    }
-    
-    if (closeRegister) {
-        closeRegister.addEventListener('click', () => {
-            if (registerModal) {
+            });
+        }
+        
+        if (closeRegister) {
+            closeRegister.addEventListener('click', () => {
                 registerModal.style.display = 'none';
-            }
-        });
-    }
-    
-    // Закрыть при клике вне окна
-    window.addEventListener('click', (e) => {
-        if (e.target === registerModal && registerModal) {
-            registerModal.style.display = 'none';
+            });
         }
-    });
-    
-    // Регистрация нового пользователя
-    if (document.getElementById('register-button')) {
-        document.getElementById('register-button').addEventListener('click', async () => {
-            const username = document.getElementById('register-username').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            const errorElement = document.getElementById('register-error');
-            
-            if (errorElement) errorElement.textContent = '';
-            
-            // Валидация
-            if (!username || !email || !password) {
-                if (errorElement) errorElement.textContent = 'Заполните все поля';
-                return;
-            }
-            
-            if (username.length < 3) {
-                if (errorElement) errorElement.textContent = 'Ник должен быть от 3 символов';
-                return;
-            }
-            
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                if (errorElement) errorElement.textContent = 'Введите корректный email';
-                return;
-            }
-            
-            if (password.length < 6) {
-                if (errorElement) errorElement.textContent = 'Пароль должен быть от 6 символов';
-                return;
-            }
-            
-            try {
-                // Создаем пользователя
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                
-                // Сохраняем ник в Firestore
-                await db.collection('users').doc(userCredential.user.uid).set({
-                    username: username,
-                    email: email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // Отправляем письмо подтверждения
-                await sendVerificationEmail(userCredential.user);
-                
-                // Сохраняем email для возможной повторной отправки
-                pendingEmail = email;
-                
-                // Показываем сообщение о успешной регистрации
-                alert('Регистрация успешна! Проверьте email для подтверждения.');
-                
-                // Показываем кнопку повторной отправки
-                if (resendContainer) {
-                    resendContainer.style.display = 'block';
-                }
-                if (resendMessage) {
-                    resendMessage.textContent = '';
-                }
-                
-                // Закрываем модальное окно регистрации
-                if (registerModal) {
-                    registerModal.style.display = 'none';
-                }
-                
-            } catch (error) {
-                console.error('Ошибка регистрации:', error);
-                
-                if (errorElement) {
-                    // Человекочитаемые ошибки
-                    const errorMessages = {
-                        'auth/email-already-in-use': 'Этот email уже зарегистрирован',
-                        'auth/invalid-email': 'Неверный формат email',
-                        'auth/weak-password': 'Пароль слишком простой',
-                        'auth/network-request-failed': 'Проблемы с интернетом'
-                    };
-                    
-                    errorElement.textContent = errorMessages[error.code] || 'Ошибка регистрации';
-                }
-            }
-        });
-    }
-    
-    // Функция отправки письма подтверждения
-    async function sendVerificationEmail(user) {
-        try {
-            await user.sendEmailVerification();
-            console.log('Письмо подтверждения отправлено на:', user.email);
-            return true;
-        } catch (error) {
-            console.error('Ошибка отправки письма подтверждения:', error);
-            return false;
-        }
-    }
-    
-    // Повторная отправка письма подтверждения
-    if (resendButton) {
-        resendButton.addEventListener('click', async () => {
-            if (!pendingEmail) return;
-            
-            if (resendMessage) {
-                resendMessage.textContent = 'Отправка...';
-                resendMessage.className = 'resend-message';
-            }
-            
-            try {
-                // Получаем текущего пользователя
-                const user = auth.currentUser;
-                
-                if (user && user.email === pendingEmail) {
-                    const success = await sendVerificationEmail(user);
-                    
-                    if (resendMessage) {
-                        if (success) {
-                            resendMessage.textContent = 'Письмо успешно отправлено! Проверьте ваш email.';
-                            resendMessage.className = 'resend-message resend-success';
-                        } else {
-                            resendMessage.textContent = 'Ошибка при отправке письма. Попробуйте позже.';
-                            resendMessage.className = 'resend-message resend-error';
-                        }
-                    }
+        
+        // Настройки и создание мема
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                if (currentUser) {
+                    createMemeModal.style.display = 'flex';
                 } else {
-                    // Если пользователь вышел, предлагаем войти снова
-                    if (resendMessage) {
-                        resendMessage.textContent = 'Войдите снова, чтобы отправить письмо подтверждения.';
-                        resendMessage.className = 'resend-message resend-error';
-                    }
-                    if (resendContainer) {
-                        resendContainer.style.display = 'none';
-                    }
+                    alert('Войдите в аккаунт, чтобы добавлять мемы');
                 }
-            } catch (error) {
-                console.error('Ошибка при повторной отправке:', error);
-                if (resendMessage) {
-                    resendMessage.textContent = 'Произошла ошибка. Попробуйте позже.';
-                    resendMessage.className = 'resend-message resend-error';
+            });
+        }
+        
+        if (closeCreateMeme) {
+            closeCreateMeme.addEventListener('click', () => {
+                createMemeModal.style.display = 'none';
+            });
+        }
+        
+        if (publishMemeBtn) {
+            publishMemeBtn.addEventListener('click', publishMeme);
+        }
+        
+        // Поиск
+        if (searchButton) {
+            searchButton.addEventListener('click', searchMemes);
+        }
+        
+        if (searchInput) {
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchMemes();
                 }
-            }
-        });
+            });
+        }
     }
     
-    // Вход пользователя
-    if (document.getElementById('login-button')) {
-        document.getElementById('login-button').addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const errorElement = document.getElementById('login-error');
+    async function handleAuthStateChange(user) {
+        if (user && user.emailVerified) {
+            currentUser = user;
+            authPage.style.display = 'none';
+            appPage.style.display = 'block';
+            await loadAllMemes();
+        } else {
+            currentUser = null;
+            authPage.style.display = 'flex';
+            appPage.style.display = 'none';
+        }
+    }
+    
+    async function login() {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const errorElement = document.getElementById('login-error');
+        
+        try {
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
             
+            if (!userCredential.user.emailVerified) {
+                await auth.signOut();
+                if (errorElement) {
+                    errorElement.textContent = 'Подтвердите email (проверьте спам)';
+                }
+                return;
+            }
+        } catch (error) {
+            console.error('Ошибка входа:', error);
+            if (errorElement) {
+                const errorMessages = {
+                    'auth/user-not-found': 'Аккаунт не найден',
+                    'auth/wrong-password': 'Неверный пароль',
+                    'auth/too-many-requests': 'Слишком много попыток'
+                };
+                errorElement.textContent = errorMessages[error.code] || 'Ошибка входа';
+            }
+        }
+    }
+    
+    async function register() {
+        const username = document.getElementById('register-username').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const errorElement = document.getElementById('register-error');
+        
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            
+            await db.collection('users').doc(userCredential.user.uid).set({
+                username,
+                email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            await userCredential.user.sendEmailVerification();
+            alert('Регистрация успешна! Проверьте email для подтверждения.');
+            registerModal.style.display = 'none';
+        } catch (error) {
+            console.error('Ошибка регистрации:', error);
+            if (errorElement) {
+                const errorMessages = {
+                    'auth/email-already-in-use': 'Этот email уже зарегистрирован',
+                    'auth/invalid-email': 'Неверный формат email',
+                    'auth/weak-password': 'Пароль слишком простой'
+                };
+                errorElement.textContent = errorMessages[error.code] || 'Ошибка регистрации';
+            }
+        }
+    }
+    
+    async function publishMeme() {
+        const fileInput = document.getElementById('meme-image');
+        const nameInput = document.getElementById('meme-name');
+        const priceInput = document.getElementById('meme-price');
+        const errorElement = document.getElementById('create-meme-error');
+        
+        const file = fileInput.files[0];
+        const name = nameInput.value;
+        const price = parseFloat(priceInput.value);
+        
+        if (!file || !name || !price) {
+            if (errorElement) errorElement.textContent = 'Заполните все поля';
+            return;
+        }
+        
+        if (price < 1) {
+            if (errorElement) errorElement.textContent = 'Цена должна быть больше $1';
+            return;
+        }
+        
+        try {
+            // Загрузка изображения
+            const storageRef = storage.ref(`memes/${currentUser.uid}/${Date.now()}_${file.name}`);
+            await storageRef.put(file);
+            const imageUrl = await storageRef.getDownloadURL();
+            
+            // Создание записи о меме
+            await db.collection('memes').add({
+                name,
+                imageUrl,
+                price,
+                ownerId: currentUser.uid,
+                ownerName: currentUser.displayName || 'Аноним',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Очистка формы
+            fileInput.value = '';
+            nameInput.value = '';
+            priceInput.value = '';
             if (errorElement) errorElement.textContent = '';
             
-            if (!email || !password) {
-                if (errorElement) errorElement.textContent = 'Заполните все поля';
-                return;
-            }
-            
-            try {
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                
-                if (!userCredential.user.emailVerified) {
-                    // Сохраняем email для возможной повторной отправки
-                    pendingEmail = email;
-                    if (resendContainer) {
-                        resendContainer.style.display = 'block';
-                    }
-                    
-                    await auth.signOut();
-                    if (errorElement) {
-                        errorElement.textContent = 'Подтвердите email (проверьте спам)';
-                    }
-                    return;
-                }
-                
-                // Успешный вход
-                pendingEmail = null;
-                if (resendContainer) {
-                    resendContainer.style.display = 'none';
-                }
-                if (authPage) {
-                    authPage.style.display = 'none';
-                }
-                if (appPage) {
-                    appPage.style.display = 'block';
-                }
-                loadTopMemes();
-                
-            } catch (error) {
-                console.error('Ошибка входа:', error);
-                
-                if (errorElement) {
-                    const errorMessages = {
-                        'auth/user-not-found': 'Аккаунт не найден',
-                        'auth/wrong-password': 'Неверный пароль',
-                        'auth/too-many-requests': 'Слишком много попыток',
-                        'auth/user-disabled': 'Аккаунт отключен'
-                    };
-                    
-                    errorElement.textContent = errorMessages[error.code] || 'Ошибка входа';
-                }
-            }
-        });
+            createMemeModal.style.display = 'none';
+            alert('Мем успешно добавлен на биржу!');
+            await loadAllMemes(); // Обновляем список мемов
+        } catch (error) {
+            console.error('Ошибка публикации мема:', error);
+            if (errorElement) errorElement.textContent = 'Ошибка: ' + error.message;
+        }
     }
     
-    // Загрузка топ-мемов
-    async function loadTopMemes() {
+    async function loadAllMemes() {
         try {
-            const grid = document.getElementById('top-memes-grid');
-            if (!grid) {
-                console.error('Элемент top-memes-grid не найден');
-                return;
-            }
-
-            // Безопасная очистка grid
-            while (grid.firstChild) {
-                grid.removeChild(grid.firstChild);
-            }
-
+            loadingMemes.style.display = 'block';
+            memeGrid.innerHTML = '';
+            
+            // Получаем все мемы без сортировки на сервере
             const snapshot = await db.collection('memes')
-                .orderBy('price', 'desc')
-                .limit(5)
+                .limit(100) // Ограничение для бесплатного тарифа
                 .get();
             
-            if (snapshot.empty) {
-                console.log('Нет мемов для отображения');
-                const emptyMessage = document.createElement('div');
-                emptyMessage.textContent = 'Пока нет мемов для отображения';
-                grid.appendChild(emptyMessage);
-                return;
-            }
-
-            snapshot.forEach(doc => {
-                const meme = doc.data();
-                const memeElement = document.createElement('div');
-                memeElement.className = 'meme-card';
-                memeElement.innerHTML = `
-                    <img src="${meme.imageUrl || 'placeholder.jpg'}" class="meme-image" alt="${meme.name || 'Мем'}">
-                    <div class="meme-info">
-                        <div class="meme-name">${meme.name || 'Без названия'}</div>
-                        <div class="meme-price">$${meme.price || '0'}</div>
-                    </div>
-                `;
-                grid.appendChild(memeElement);
-            });
+            // Преобразуем в массив и сортируем на клиенте
+            allMemes = snapshot.docs.map(doc => ({ 
+                id: doc.id, 
+                ...doc.data() 
+            })).sort((a, b) => b.price - a.price); // Сортировка по убыванию цены
+            
+            renderMemes(allMemes);
+            loadingMemes.style.display = 'none';
         } catch (error) {
             console.error('Ошибка загрузки мемов:', error);
-            const grid = document.getElementById('top-memes-grid');
-            if (grid) {
-                const errorElement = document.createElement('div');
-                errorElement.className = 'error-message';
-                errorElement.textContent = 'Не удалось загрузить мемы. Попробуйте позже.';
-                grid.appendChild(errorElement);
-            }
+            loadingMemes.textContent = 'Ошибка загрузки мемов. Попробуйте позже.';
         }
     }
     
-    // Отслеживание состояния аутентификации
-    auth.onAuthStateChanged(user => {
-        if (user && user.emailVerified) {
-            pendingEmail = null;
-            if (resendContainer) {
-                resendContainer.style.display = 'none';
-            }
-            if (authPage) {
-                authPage.style.display = 'none';
-            }
-            if (appPage) {
-                appPage.style.display = 'block';
-            }
-            loadTopMemes();
-        } else {
-            if (authPage) {
-                authPage.style.display = 'flex';
-            }
-            if (appPage) {
-                appPage.style.display = 'none';
-            }
+    function searchMemes() {
+        const query = searchInput.value.toLowerCase().trim();
+        
+        if (!query) {
+            renderMemes(allMemes);
+            return;
         }
-    });
+        
+        const filtered = allMemes.filter(meme => 
+            meme.name.toLowerCase().includes(query)
+        );
+        
+        renderMemes(filtered);
+    }
+    
+    function renderMemes(memesToRender) {
+        memeGrid.innerHTML = '';
+        
+        if (memesToRender.length === 0) {
+            memeGrid.innerHTML = '<p>Мемы не найдены</p>';
+            return;
+        }
+        
+        // Ограничиваем показ 20 мемами для производительности
+        const memesToShow = memesToRender.slice(0, 20);
+        
+        memesToShow.forEach(meme => {
+            const memeElement = document.createElement('div');
+            memeElement.className = 'meme-card';
+            memeElement.innerHTML = `
+                <img src="${meme.imageUrl}" class="meme-image" alt="${meme.name}" loading="lazy">
+                <div class="meme-info">
+                    <div class="meme-name">${meme.name}</div>
+                    <div class="meme-price" data-meme-id="${meme.id}">$${meme.price.toFixed(2)}</div>
+                    <small>Добавил: ${meme.ownerName || 'Аноним'}</small>
+                </div>
+            `;
+            memeGrid.appendChild(memeElement);
+        });
+    }
+    
+    // Реализация простого real-time обновления цен
+    function setupSimpleUpdates() {
+        db.collection('memes').onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(change => {
+                if (change.type === 'modified') {
+                    const updatedMeme = change.doc.data();
+                    const priceElement = document.querySelector(`.meme-price[data-meme-id="${change.doc.id}"]`);
+                    
+                    if (priceElement) {
+                        const oldPrice = parseFloat(priceElement.textContent.replace('$', ''));
+                        const newPrice = updatedMeme.price;
+                        
+                        priceElement.textContent = `$${newPrice.toFixed(2)}`;
+                        
+                        if (newPrice > oldPrice) {
+                            priceElement.classList.add('price-up');
+                            setTimeout(() => priceElement.classList.remove('price-up'), 1000);
+                        } else if (newPrice < oldPrice) {
+                            priceElement.classList.add('price-down');
+                            setTimeout(() => priceElement.classList.remove('price-down'), 1000);
+                        }
+                    }
+                }
+            });
+        });
+    }
 </script>
 </body>
-  </html>
+</html>
